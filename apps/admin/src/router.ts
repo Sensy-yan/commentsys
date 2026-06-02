@@ -3,6 +3,7 @@ import Login from './pages/Login.vue';
 import Dashboard from './pages/Dashboard.vue';
 import Complaints from './pages/Complaints.vue';
 import Photos from './pages/Photos.vue';
+import Settings from './pages/Settings.vue';
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -12,6 +13,7 @@ export const router = createRouter({
     { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true } },
     { path: '/complaints', component: Complaints, meta: { requiresAuth: true } },
     { path: '/photos', component: Photos, meta: { requiresAuth: true } },
+    { path: '/settings', component: Settings, meta: { requiresAuth: true } },
   ],
 });
 

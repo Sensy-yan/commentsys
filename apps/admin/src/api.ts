@@ -75,4 +75,9 @@ export const api = {
 
   deletePhoto: (id: string) =>
     http<{ ok: true }>(`/admin/photos/${id}`, { method: 'DELETE' }),
+
+  getConfig: () =>
+    http<any>('/admin/config'),
+  saveConfig: (data: any) =>
+    http<{ ok: true }>('/admin/config', { method: 'PUT', body: JSON.stringify(data) }),
 };
