@@ -2,5 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #app { height: 100%; margin: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
+@layer base {
+  html, body, #app { height: 100%; margin: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #0F172A;
+  }
+}
+
+@layer components {
+  /* 顶部扫描线 - 每个页面顶部都有,贴在视口顶部,体现"扫描线"科技感 */
+  .scan-line::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(14,165,164,0.5) 50%, transparent 100%);
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium
+           rounded-xl py-3.5 px-6 shadow-brand transition-all duration-200
+           hover:shadow-card-hover active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-slate-200 text-slate-700 font-medium
+           rounded-xl py-3 px-5 transition-all duration-200
+           hover:border-slate-300 active:scale-[0.98];
+  }
+
+  .input {
+    @apply bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900
+           transition-all duration-200 outline-none
+           focus:border-brand-500 focus:ring-2 focus:ring-brand-100
+           placeholder:text-slate-400;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-card;
+  }
+
+  .label {
+    @apply text-xs uppercase tracking-[0.15em] text-slate-500 font-medium;
+  }
+
+  .heading-1 {
+    @apply text-2xl font-semibold tracking-tight bg-gradient-to-r from-teal-700 to-cyan-700 bg-clip-text text-transparent;
+  }
+}

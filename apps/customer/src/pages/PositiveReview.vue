@@ -79,76 +79,156 @@ onMounted(async () => { await regenerate(); await loadPhotos(); });
 </script>
 
 <template>
-  <div class="p-4 space-y-4">
-    <h2 class="text-lg font-bold">写一条好评</h2>
+  <div class="px-4 pt-6 pb-28 max-w-md mx-auto space-y-4">
+    <!-- 顶部 header -->
+    <header class="px-1 pb-2">
+      <div class="label mb-2">POSITIVE REVIEW</div>
+      <h2 class="heading-1">写一条好评</h2>
+      <p class="text-sm text-slate-500 mt-1.5">几秒生成,一键发布到公域</p>
+    </header>
 
-    <div>
-      <div class="text-sm text-gray-600 mb-2">发到哪个平台?</div>
+    <!-- 平台 -->
+    <section class="card p-4">
+      <div class="label mb-3">发到哪个平台</div>
       <div class="grid grid-cols-4 gap-2">
-        <button v-for="(label, key) in PLATFORM_LABEL" :key="key"
+        <button
+          v-for="(label, key) in PLATFORM_LABEL"
+          :key="key"
           @click="platform = (key as any); regenerate(); loadPhotos();"
-          class="py-2 rounded border text-sm"
-          :class="platform === key ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300'">
+          class="py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 active:scale-[0.97]"
+          :class="platform === key
+            ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-transparent shadow-brand'
+            : 'border-slate-200 text-slate-600 hover:border-slate-300'"
+        >
           {{ label }}
         </button>
       </div>
-    </div>
+    </section>
 
-    <div>
-      <div class="text-sm text-gray-600 mb-2">今天体验了什么?</div>
+    <!-- 项目标签 -->
+    <section class="card p-4">
+      <div class="label mb-3">今天体验了什么</div>
       <div class="flex flex-wrap gap-2">
-        <button v-for="t in AVAILABLE_TAGS" :key="t" @click="toggleTag(t)"
-          class="px-3 py-1 rounded-full border text-sm"
-          :class="tags.includes(t) ? 'bg-green-100 border-green-500' : 'border-gray-300'">
+        <button
+          v-for="t in AVAILABLE_TAGS"
+          :key="t"
+          @click="toggleTag(t)"
+          class="px-3.5 py-1.5 rounded-full border text-sm transition-all duration-200 active:scale-[0.97]"
+          :class="tags.includes(t)
+            ? 'bg-brand-50 border-brand-500 text-brand-700 font-medium'
+            : 'border-slate-200 text-slate-600 hover:border-slate-300'"
+        >
           {{ t }}
         </button>
       </div>
-    </div>
+    </section>
 
-    <div>
-      <div class="text-sm text-gray-600 mb-2">服务技师</div>
-      <div class="flex gap-2">
-        <button v-for="t in TECHNICIANS" :key="t" @click="technician = t"
-          class="px-3 py-1 rounded-full border text-sm"
-          :class="technician === t ? 'bg-green-100 border-green-500' : 'border-gray-300'">
+    <!-- 技师 -->
+    <section class="card p-4">
+      <div class="label mb-3">服务技师</div>
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-for="t in TECHNICIANS"
+          :key="t"
+          @click="technician = t"
+          class="px-3.5 py-1.5 rounded-full border text-sm transition-all duration-200 active:scale-[0.97]"
+          :class="technician === t
+            ? 'bg-brand-50 border-brand-500 text-brand-700 font-medium'
+            : 'border-slate-200 text-slate-600 hover:border-slate-300'"
+        >
           {{ t }}
         </button>
       </div>
-    </div>
+    </section>
 
-    <div class="bg-white border border-gray-200 rounded p-3">
-      <div v-if="loading" class="text-gray-500 text-sm">AI 正在为您写评价...</div>
-      <textarea v-else v-model="text" rows="6"
-        class="w-full text-sm focus:outline-none resize-none"/>
-      <div class="flex justify-end mt-2 gap-2">
-        <button @click="regenerate" :disabled="loading"
-          class="text-sm text-blue-500 disabled:text-gray-300">换一条</button>
+    <!-- AI 文案 -->
+    <section class="card p-4">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-1.5">
+          <svg
+            class="w-3.5 h-3.5 text-brand-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z" />
+          </svg>
+          <span class="label">AI 智能文案</span>
+        </div>
+        <button
+          @click="regenerate"
+          :disabled="loading"
+          class="text-xs text-brand-600 font-medium disabled:text-slate-300 hover:text-brand-700 transition-colors"
+        >
+          换一条
+        </button>
       </div>
-      <div class="text-xs text-gray-400 text-right mt-1">
-        <span v-if="source === 'ai'">✨ AI 生成</span>
-        <span v-else-if="source === 'template'">📝 模板生成</span>
+      <div
+        v-if="loading"
+        class="flex items-center gap-2 text-slate-500 text-sm py-8 justify-center"
+      >
+        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse [animation-delay:200ms]" />
+        <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse [animation-delay:400ms]" />
+        <span class="ml-2 tracking-wide">AI 正在为您撰写</span>
       </div>
-    </div>
+      <textarea
+        v-else
+        v-model="text"
+        rows="6"
+        class="w-full text-sm text-slate-700 leading-relaxed focus:outline-none resize-none bg-slate-50/60 rounded-xl p-3 placeholder:text-slate-400"
+        placeholder="文案生成中..."
+      />
+      <div v-if="!loading && source" class="text-xs text-slate-400 text-right mt-2 tracking-wide">
+        <span v-if="source === 'ai'">由 AI 智能生成</span>
+        <span v-else-if="source === 'template'">模板生成</span>
+      </div>
+    </section>
 
-    <div v-if="photos.length" class="space-y-2">
-      <div class="text-sm text-gray-600">搭配照片(可选,最多 3 张)</div>
-      <div class="grid grid-cols-5 gap-1">
-        <div v-for="p in photos" :key="p.id"
-          class="relative aspect-square cursor-pointer"
-          @click="togglePhoto(p.id)">
-          <img :src="p.url" class="w-full h-full object-cover rounded"/>
-          <div v-if="selectedPhotos.includes(p.id)"
-            class="absolute inset-0 bg-blue-500/30 border-2 border-blue-500 rounded flex items-center justify-center">
-            <span class="bg-blue-500 text-white text-xs px-1 rounded">{{ selectedPhotos.indexOf(p.id) + 1 }}</span>
+    <!-- 照片 -->
+    <section v-if="photos.length" class="card p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="label">搭配照片</div>
+        <span class="text-xs text-slate-400">已选 {{ selectedPhotos.length }}/3</span>
+      </div>
+      <div class="grid grid-cols-5 gap-1.5">
+        <div
+          v-for="p in photos"
+          :key="p.id"
+          class="relative aspect-square cursor-pointer transition-transform active:scale-95"
+          @click="togglePhoto(p.id)"
+        >
+          <img
+            :src="p.url"
+            class="w-full h-full object-cover rounded-lg"
+          />
+          <div
+            v-if="selectedPhotos.includes(p.id)"
+            class="absolute inset-0 bg-brand-500/30 border-2 border-brand-500 rounded-lg flex items-start justify-end p-1"
+          >
+            <span class="bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs font-semibold w-5 h-5 rounded-full flex items-center justify-center shadow-md">
+              {{ selectedPhotos.indexOf(p.id) + 1 }}
+            </span>
           </div>
         </div>
       </div>
-      <p class="text-xs text-gray-500">提示:打开 App 后,文案会自动复制,图片请在 App 内长按下载或截图</p>
-    </div>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        打开 App 后,文案会自动复制。图片请在 App 内长按下载或截图。
+      </p>
+    </section>
 
-    <button @click="copyAndJump" :disabled="!text"
-      class="w-full bg-orange-500 disabled:bg-gray-300 text-white py-3 rounded">
-      复制评价 + 打开 {{ PLATFORM_LABEL[platform] }}
-    </button>
+    <!-- 底部 CTA -->
+    <div class="pt-2">
+      <button
+        @click="copyAndJump"
+        :disabled="!text"
+        class="btn-primary w-full text-base"
+      >
+        复制评价 · 打开 {{ PLATFORM_LABEL[platform] }}
+      </button>
+    </div>
   </div>
 </template>

@@ -51,61 +51,127 @@ function toggleRating(n: number) {
   if (i >= 0) meta.value.rating_match.splice(i, 1); else meta.value.rating_match.push(n);
 }
 
+const PLATFORM_LABEL: Record<string, string> = {
+  dianping: '点评', meituan: '美团', douyin: '抖音', xiaohongshu: '小红书',
+};
+
 onMounted(load);
 </script>
 
 <template>
-  <div class="p-4 max-w-md mx-auto">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-bold">照片库 ({{ items.length }})</h1>
-      <button @click="showUpload = !showUpload"
-        class="px-3 py-1 bg-blue-500 text-white rounded text-sm">
+  <div class="px-4 pt-5 pb-12 max-w-md mx-auto">
+    <!-- Header -->
+    <header class="flex items-end justify-between mb-5">
+      <div>
+        <div class="label mb-1.5">PHOTO LIBRARY</div>
+        <h1 class="heading-1">照片库</h1>
+        <p class="text-xs text-slate-500 mt-1.5 tracking-wide">共 {{ items.length }} 张</p>
+      </div>
+      <button
+        @click="showUpload = !showUpload"
+        class="btn-primary py-2.5 px-4 text-sm"
+      >
         {{ showUpload ? '取消' : '+ 上传' }}
       </button>
-    </div>
+    </header>
 
-    <div v-if="showUpload" class="bg-white border rounded p-3 mb-4 space-y-3">
+    <!-- 上传表单 -->
+    <div v-if="showUpload" class="card p-4 mb-4 space-y-4">
       <div>
-        <div class="text-sm mb-1">类型</div>
-        <select v-model="meta.type" class="w-full border rounded p-2 text-sm">
+        <div class="label mb-2">类型</div>
+        <select v-model="meta.type" class="input w-full text-sm">
           <option value="环境">环境</option>
           <option value="过程">过程</option>
           <option value="效果">效果</option>
         </select>
       </div>
+
       <div>
-        <div class="text-sm mb-1">适用平台</div>
-        <div class="flex flex-wrap gap-1">
-          <button v-for="p in ['dianping','meituan','douyin','xiaohongshu']" :key="p"
+        <div class="label mb-2">适用平台</div>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="p in ['dianping','meituan','douyin','xiaohongshu']"
+            :key="p"
             @click="togglePlatform(p)"
-            class="px-2 py-1 rounded text-xs border"
-            :class="meta.platforms.includes(p) ? 'bg-blue-100 border-blue-500' : 'border-gray-300'">
-            {{ ({dianping:'点评',meituan:'美团',douyin:'抖音',xiaohongshu:'小红书'} as Record<string,string>)[p] }}
+            class="px-3 py-1.5 rounded-full text-xs border transition-all duration-200 active:scale-95"
+            :class="meta.platforms.includes(p)
+              ? 'bg-brand-50 border-brand-500 text-brand-700 font-medium'
+              : 'border-slate-200 text-slate-600'"
+          >
+            {{ PLATFORM_LABEL[p] }}
           </button>
         </div>
       </div>
+
       <div>
-        <div class="text-sm mb-1">适合星级</div>
-        <div class="flex gap-1">
-          <button v-for="n in [3,4,5]" :key="n" @click="toggleRating(n)"
-            class="px-3 py-1 rounded text-xs border"
-            :class="meta.rating_match.includes(n) ? 'bg-yellow-100 border-yellow-500' : 'border-gray-300'">
+        <div class="label mb-2">适合星级</div>
+        <div class="flex gap-2">
+          <button
+            v-for="n in [3,4,5]"
+            :key="n"
+            @click="toggleRating(n)"
+            class="px-3.5 py-1.5 rounded-full text-xs border transition-all duration-200 active:scale-95"
+            :class="meta.rating_match.includes(n)
+              ? 'bg-amber-50 border-amber-400 text-amber-700 font-medium'
+              : 'border-slate-200 text-slate-600'"
+          >
             {{ n }}★
           </button>
         </div>
       </div>
-      <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp"
-        @change="onPick" class="w-full text-sm"/>
-      <p v-if="uploading" class="text-sm text-gray-500">上传中...</p>
+
+      <div>
+        <div class="label mb-2">选择文件</div>
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          @change="onPick"
+          class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 file:transition-colors file:cursor-pointer"
+        />
+      </div>
+
+      <div
+        v-if="uploading"
+        class="flex items-center gap-2 text-sm text-slate-500"
+      >
+        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+        上传中...
+      </div>
     </div>
 
-    <div class="grid grid-cols-3 gap-2">
-      <div v-for="p in items" :key="p.id" class="relative aspect-square">
-        <img :src="p.url" class="w-full h-full object-cover rounded"/>
-        <button @click="del(p.id)"
-          class="absolute top-1 right-1 bg-black/50 text-white text-xs px-1 rounded">×</button>
-        <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-1 truncate">
-          {{ p.type }}
+    <!-- 空状态 -->
+    <div v-if="items.length === 0 && !showUpload" class="card py-16 flex flex-col items-center text-center">
+      <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+        <svg class="w-6 h-6 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+      <p class="text-slate-400 text-sm">还没有上传照片</p>
+    </div>
+
+    <!-- 网格 -->
+    <div v-else class="grid grid-cols-3 gap-2">
+      <div
+        v-for="p in items"
+        :key="p.id"
+        class="relative aspect-square group overflow-hidden rounded-xl bg-slate-100"
+      >
+        <img
+          :src="p.url"
+          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        <button
+          @click="del(p.id)"
+          class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center backdrop-blur-sm hover:bg-red-500/80 transition-colors"
+          aria-label="删除"
+        >
+          ×
+        </button>
+        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-2 pt-4 pb-1.5">
+          <span class="text-white text-xs tracking-wide">{{ p.type }}</span>
         </div>
       </div>
     </div>

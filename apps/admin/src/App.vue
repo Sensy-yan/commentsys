@@ -1,7 +1,7 @@
 <script setup lang="ts"></script>
 
 <template>
-  <main class="min-h-full bg-gray-50">
+  <main class="scan-line min-h-full bg-gradient-to-b from-slate-50 to-white">
     <RouterView />
   </main>
 </template>
