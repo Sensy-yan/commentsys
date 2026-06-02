@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { DB } from '../db.js';
 import { generateReview } from '../services/llm.js';
 import { composeFromPool } from '../services/templatePool.js';
+import { notifyComplaint } from '../services/notification.js';
 
 const startSessionSchema = z.object({
   storeId: z.string().min(1),
@@ -94,6 +95,19 @@ export function buildCustomerRouter(db: DB) {
       parsed.data.contact ?? null,
       Date.now(),
     );
+
+    const config = db.prepare('SELECT wecom_webhook FROM store_config WHERE store_id=?')
+      .get(session.store_id) as any;
+    const webhookUrl = config?.wecom_webhook ?? process.env.WECOM_WEBHOOK_URL ?? '';
+
+    notifyComplaint({
+      webhookUrl,
+      complaintId: id,
+      rating: session.rating,
+      message: parsed.data.message,
+      contact: parsed.data.contact ?? null,
+      adminUrl: `${c.req.url.replace(/\/api\/customer\/complaints$/, '')}/admin/#/complaints`,
+    }).catch(() => {});  // 不阻塞响应
 
     return c.json({ complaintId: id });
   });
