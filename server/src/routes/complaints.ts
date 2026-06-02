@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { DB } from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { logAction } from '../services/audit.js';
 
 const handleSchema = z.object({ note: z.string().max(500).optional() });
 
@@ -37,6 +38,14 @@ export function buildComplaintsRouter(db: DB, jwtSecret: string) {
       `UPDATE complaints SET status='handled', handler_id=?, handler_note=?, handled_at=?
        WHERE id=?`,
     ).run(claims.operatorId, parsed.data.note ?? null, Date.now(), id);
+
+    logAction(db, {
+      operatorId: claims.operatorId,
+      action: 'complaint_handled',
+      targetType: 'complaint',
+      targetId: id,
+      details: { note: parsed.data.note ?? null },
+    });
 
     return c.json({ ok: true });
   });
