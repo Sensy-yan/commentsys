@@ -16,6 +16,14 @@ const complaintSchema = z.object({
   contact: z.string().max(50).optional(),
 });
 
+const PLATFORMS = ['dianping', 'meituan', 'douyin', 'xiaohongshu'] as const;
+const generateSchema = z.object({
+  sessionId: z.string().uuid(),
+  platform: z.enum(PLATFORMS),
+  tags: z.array(z.string()).default([]),
+  technician: z.string().default(''),
+});
+
 export function buildCustomerRouter(db: DB) {
   const app = new Hono();
 
@@ -80,6 +88,24 @@ export function buildCustomerRouter(db: DB) {
     );
 
     return c.json({ complaintId: id });
+  });
+
+  app.post('/reviews/generate', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const parsed = generateSchema.safeParse(body);
+    if (!parsed.success) return c.json({ error: 'bad_request' }, 400);
+
+    const stubByPlatform: Record<string, string> = {
+      dianping: `今天来这家店做了${parsed.data.tags[0] ?? '头皮检测'}，${parsed.data.technician || '技师'}手法专业，头皮明显感觉清爽很多。环境也不错，整体性价比高，推荐脱发困扰的朋友试试。`,
+      meituan: `做了一次${parsed.data.tags[0] ?? '头皮检测'}，效果不错，技师专业，会再来。`,
+      douyin: `头皮养护打卡！${parsed.data.tags[0] ?? '头皮检测'}做完整个人都轻松了，建议姐妹们试一次。`,
+      xiaohongshu: `姐妹们我又来分享啦~ ${parsed.data.tags[0] ?? '头皮检测'}体验感超棒，技师手法细致，头皮真的轻松了好多！价格也合理🤍`,
+    };
+
+    return c.json({
+      text: stubByPlatform[parsed.data.platform],
+      source: 'stub',
+    });
   });
 
   return app;
