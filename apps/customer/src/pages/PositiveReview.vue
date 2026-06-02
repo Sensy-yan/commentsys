@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue';
 import { api } from '../api.js';
 import { useSessionStore } from '../store/session.js';
+import { copyText } from '../utils/clipboard.js';
+import { jumpToApp } from '../utils/appJump.js';
 
 const session = useSessionStore();
 const platform = ref<'dianping' | 'meituan' | 'douyin' | 'xiaohongshu'>('dianping');
@@ -52,12 +54,26 @@ function toggleTag(tag: string) {
 }
 
 async function copyAndJump() {
-  try {
-    await navigator.clipboard.writeText(text.value);
-    alert(`已复制评价!请打开 ${PLATFORM_LABEL[platform.value]} App 长按粘贴`);
-  } catch {
-    alert('请手动复制评价内容');
+  const ok = await copyText(text.value);
+  if (!ok) {
+    alert('请手动长按选中文案复制');
+    return;
   }
+  // 通知后端这次跳转
+  fetch('/api/customer/reviews/log-jump', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: session.sessionId,
+      platform: platform.value,
+      tags: tags.value,
+      technician: technician.value,
+      photoIds: selectedPhotos.value,
+      text: text.value,
+    }),
+  }).catch(() => {});
+
+  // 暂时不传 fallbackUrl,Task 6.3 会从 session.platformUrls 拉
+  jumpToApp(platform.value);
 }
 
 onMounted(async () => { await regenerate(); await loadPhotos(); });

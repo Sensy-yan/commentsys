@@ -33,6 +33,15 @@ const recommendSchema = z.object({
   limit: z.coerce.number().min(1).max(10).default(5),
 });
 
+const logJumpSchema = z.object({
+  sessionId: z.string().min(1),
+  platform: z.enum(PLATFORMS),
+  tags: z.array(z.string()).default([]),
+  technician: z.string().default(''),
+  photoIds: z.array(z.string()).default([]),
+  text: z.string(),
+});
+
 export function buildCustomerRouter(db: DB) {
   const app = new Hono();
 
@@ -183,6 +192,42 @@ export function buildCustomerRouter(db: DB) {
     }
 
     return c.json({ items: filtered.slice(0, parsed.data.limit) });
+  });
+
+  app.post('/reviews/log-jump', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const parsed = logJumpSchema.safeParse(body);
+    if (!parsed.success) return c.json({ error: 'bad_request' }, 400);
+
+    const session = db.prepare('SELECT store_id, rating FROM sessions WHERE id=?')
+      .get(parsed.data.sessionId) as any;
+    if (!session) return c.json({ error: 'session_not_found' }, 404);
+
+    const id = randomUUID();
+    db.prepare(`INSERT INTO reviews
+      (id, session_id, store_id, rating, platform, project_tags, technician_id, edited_text, photo_ids, copied_at, jumped_to_app, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+    ).run(
+      id,
+      parsed.data.sessionId,
+      session.store_id,
+      session.rating,
+      parsed.data.platform,
+      JSON.stringify(parsed.data.tags),
+      parsed.data.technician,
+      parsed.data.text,
+      JSON.stringify(parsed.data.photoIds),
+      Date.now(),
+      Date.now(),
+    );
+
+    // 累加照片 use_count
+    if (parsed.data.photoIds.length) {
+      const stmt = db.prepare('UPDATE photos SET use_count=use_count+1 WHERE id=?');
+      parsed.data.photoIds.forEach((pid) => stmt.run(pid));
+    }
+
+    return c.json({ ok: true });
   });
 
   return app;
