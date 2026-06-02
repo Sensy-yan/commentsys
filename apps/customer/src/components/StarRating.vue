@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-defineProps<{ size?: number }>();
+const props = defineProps<{ size?: number; defaultRating?: number }>();
 const emit = defineEmits<{ (e: 'change', rating: number): void }>();
 const hover = ref(0);
-const selected = ref(0);
+const selected = ref(props.defaultRating ?? 0);
 
 function pick(n: number) {
   selected.value = n;

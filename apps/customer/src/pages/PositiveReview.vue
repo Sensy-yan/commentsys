@@ -6,7 +6,7 @@ import { copyText } from '../utils/clipboard.js';
 import { jumpToApp } from '../utils/appJump.js';
 
 const session = useSessionStore();
-const platform = ref<'dianping' | 'meituan' | 'douyin' | 'xiaohongshu'>('dianping');
+const platform = ref<'dianping' | 'meituan' | 'douyin' | 'xiaohongshu'>('meituan');
 const tags = ref<string[]>([]);
 const technician = ref('');
 const text = ref('');
@@ -30,7 +30,7 @@ function togglePhoto(id: string) {
 }
 
 const PLATFORM_LABEL: Record<string, string> = {
-  dianping: '大众点评', meituan: '美团',
+  dianping: '点评', meituan: '美团',
   douyin: '抖音', xiaohongshu: '小红书',
 };
 const AVAILABLE_TAGS = ['头皮检测', '头皮排毒', '防脱护理', '中药养发', '头皮 SPA', '育发疗程'];
@@ -59,7 +59,6 @@ async function copyAndJump() {
     alert('请手动长按选中文案复制');
     return;
   }
-  // 通知后端这次跳转
   fetch('/api/customer/reviews/log-jump', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -79,71 +78,74 @@ onMounted(async () => { await regenerate(); await loadPhotos(); });
 </script>
 
 <template>
-  <div class="px-4 pt-6 pb-28 max-w-md mx-auto space-y-4">
-    <!-- 顶部 header -->
-    <header class="px-1 pb-2">
-      <div class="label mb-2">POSITIVE REVIEW</div>
-      <h2 class="heading-1">写一条好评</h2>
-      <p class="text-sm text-slate-500 mt-1.5">几秒生成,一键发布到公域</p>
+  <div class="h-[100dvh] flex flex-col px-3 pt-3 pb-3 max-w-md mx-auto overflow-hidden">
+    <!-- 顶部品牌 + 感谢话术 -->
+    <header class="px-1 pb-2 shrink-0">
+      <div class="flex items-end justify-between">
+        <div>
+          <div class="label">青丝瑶 · 头皮养发</div>
+          <h2 class="heading-1 mt-1 text-xl leading-tight">谢谢您的光临</h2>
+        </div>
+        <span class="text-xs text-slate-400 tracking-wide pb-1">分享您的体验</span>
+      </div>
     </header>
 
     <!-- 平台 -->
-    <section class="card p-4">
-      <div class="label mb-3">发到哪个平台</div>
-      <div class="grid grid-cols-4 gap-2">
+    <section class="card px-3 py-2.5 mb-2 shrink-0">
+      <div class="grid grid-cols-4 gap-1.5">
         <button
           v-for="(label, key) in PLATFORM_LABEL"
           :key="key"
           @click="platform = (key as any); regenerate(); loadPhotos();"
-          class="py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 active:scale-[0.97]"
+          class="py-2 rounded-lg border text-sm font-medium transition-all duration-200 active:scale-[0.97]"
           :class="platform === key
             ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-transparent shadow-brand'
-            : 'border-slate-200 text-slate-600 hover:border-slate-300'"
+            : 'border-slate-200 text-slate-600'"
         >
           {{ label }}
         </button>
       </div>
     </section>
 
-    <!-- 项目标签 -->
-    <section class="card p-4">
-      <div class="label mb-3">今天体验了什么</div>
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="t in AVAILABLE_TAGS"
-          :key="t"
-          @click="toggleTag(t)"
-          class="px-3.5 py-1.5 rounded-full border text-sm transition-all duration-200 active:scale-[0.97]"
-          :class="tags.includes(t)
-            ? 'bg-brand-50 border-brand-500 text-brand-700 font-medium'
-            : 'border-slate-200 text-slate-600 hover:border-slate-300'"
-        >
-          {{ t }}
-        </button>
+    <!-- 项目 + 技师 合并卡 -->
+    <section class="card px-3 py-2.5 mb-2 shrink-0 space-y-2">
+      <div>
+        <div class="label mb-1.5">体验项目</div>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="t in AVAILABLE_TAGS"
+            :key="t"
+            @click="toggleTag(t)"
+            class="px-2.5 py-1 rounded-full border text-xs transition-all duration-200 active:scale-[0.97]"
+            :class="tags.includes(t)
+              ? 'bg-brand-50 border-brand-500 text-brand-700 font-medium'
+              : 'border-slate-200 text-slate-600'"
+          >
+            {{ t }}
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="label shrink-0">技师</div>
+        <div class="flex gap-1.5 flex-1">
+          <button
+            v-for="t in TECHNICIANS"
+            :key="t"
+            @click="technician = t"
+            class="px-3 py-1 rounded-full border text-xs transition-all duration-200 active:scale-[0.97]"
+            :class="technician === t
+              ? 'bg-brand-50 border-brand-500 text-brand-700 font-medium'
+              : 'border-slate-200 text-slate-600'"
+          >
+            {{ t }}
+          </button>
+        </div>
       </div>
     </section>
 
-    <!-- 技师 -->
-    <section class="card p-4">
-      <div class="label mb-3">服务技师</div>
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="t in TECHNICIANS"
-          :key="t"
-          @click="technician = t"
-          class="px-3.5 py-1.5 rounded-full border text-sm transition-all duration-200 active:scale-[0.97]"
-          :class="technician === t
-            ? 'bg-brand-50 border-brand-500 text-brand-700 font-medium'
-            : 'border-slate-200 text-slate-600 hover:border-slate-300'"
-        >
-          {{ t }}
-        </button>
-      </div>
-    </section>
-
-    <!-- AI 文案 -->
-    <section class="card p-4">
-      <div class="flex items-center justify-between mb-3">
+    <!-- AI 文案 (flex-grow 占据剩余空间) -->
+    <section class="card px-3 py-2.5 mb-2 flex-1 min-h-0 flex flex-col">
+      <div class="flex items-center justify-between mb-2 shrink-0">
         <div class="flex items-center gap-1.5">
           <svg
             class="w-3.5 h-3.5 text-brand-500"
@@ -157,18 +159,20 @@ onMounted(async () => { await regenerate(); await loadPhotos(); });
             <path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z" />
           </svg>
           <span class="label">AI 智能文案</span>
+          <span v-if="!loading && source === 'ai'" class="text-[10px] text-slate-400 tracking-wide">AI</span>
+          <span v-else-if="!loading && source === 'template'" class="text-[10px] text-slate-400 tracking-wide">模板</span>
         </div>
         <button
           @click="regenerate"
           :disabled="loading"
           class="text-xs text-brand-600 font-medium disabled:text-slate-300 hover:text-brand-700 transition-colors"
         >
-          换一条
+          换一条 ↻
         </button>
       </div>
       <div
         v-if="loading"
-        class="flex items-center gap-2 text-slate-500 text-sm py-8 justify-center"
+        class="flex-1 flex items-center justify-center gap-2 text-slate-500 text-sm"
       >
         <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
         <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse [animation-delay:200ms]" />
@@ -178,57 +182,44 @@ onMounted(async () => { await regenerate(); await loadPhotos(); });
       <textarea
         v-else
         v-model="text"
-        rows="6"
-        class="w-full text-sm text-slate-700 leading-relaxed focus:outline-none resize-none bg-slate-50/60 rounded-xl p-3 placeholder:text-slate-400"
+        class="flex-1 min-h-0 w-full text-sm text-slate-700 leading-relaxed focus:outline-none resize-none bg-slate-50/60 rounded-lg p-2.5 placeholder:text-slate-400"
         placeholder="文案生成中..."
       />
-      <div v-if="!loading && source" class="text-xs text-slate-400 text-right mt-2 tracking-wide">
-        <span v-if="source === 'ai'">由 AI 智能生成</span>
-        <span v-else-if="source === 'template'">模板生成</span>
-      </div>
     </section>
 
-    <!-- 照片 -->
-    <section v-if="photos.length" class="card p-4 space-y-3">
-      <div class="flex items-center justify-between">
-        <div class="label">搭配照片</div>
-        <span class="text-xs text-slate-400">已选 {{ selectedPhotos.length }}/3</span>
+    <!-- 照片 - 紧凑单行 -->
+    <section v-if="photos.length" class="shrink-0 mb-2 px-1">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="label">搭配照片</span>
+        <span class="text-[10px] text-slate-400">{{ selectedPhotos.length }}/3</span>
       </div>
-      <div class="grid grid-cols-5 gap-1.5">
+      <div class="flex gap-1.5 overflow-x-auto">
         <div
           v-for="p in photos"
           :key="p.id"
-          class="relative aspect-square cursor-pointer transition-transform active:scale-95"
+          class="relative w-14 h-14 shrink-0 cursor-pointer transition-transform active:scale-95"
           @click="togglePhoto(p.id)"
         >
-          <img
-            :src="p.url"
-            class="w-full h-full object-cover rounded-lg"
-          />
+          <img :src="p.url" class="w-full h-full object-cover rounded-md" />
           <div
             v-if="selectedPhotos.includes(p.id)"
-            class="absolute inset-0 bg-brand-500/30 border-2 border-brand-500 rounded-lg flex items-start justify-end p-1"
+            class="absolute inset-0 bg-brand-500/30 border-2 border-brand-500 rounded-md flex items-start justify-end p-0.5"
           >
-            <span class="bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs font-semibold w-5 h-5 rounded-full flex items-center justify-center shadow-md">
+            <span class="bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
               {{ selectedPhotos.indexOf(p.id) + 1 }}
             </span>
           </div>
         </div>
       </div>
-      <p class="text-xs text-slate-400 leading-relaxed">
-        打开 App 后,文案会自动复制。图片请在 App 内长按下载或截图。
-      </p>
     </section>
 
     <!-- 底部 CTA -->
-    <div class="pt-2">
-      <button
-        @click="copyAndJump"
-        :disabled="!text"
-        class="btn-primary w-full text-base"
-      >
-        复制评价 · 打开 {{ PLATFORM_LABEL[platform] }}
-      </button>
-    </div>
+    <button
+      @click="copyAndJump"
+      :disabled="!text"
+      class="btn-primary w-full shrink-0"
+    >
+      复制评价 · 打开 {{ PLATFORM_LABEL[platform] }}
+    </button>
   </div>
 </template>
