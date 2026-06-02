@@ -11,7 +11,8 @@
     "dev:customer": "pnpm --filter customer dev",
     "dev:admin": "pnpm --filter admin dev",
     "build:public": "pnpm --filter customer build --outDir ../../public --emptyOutDir && pnpm --filter admin build --outDir ../../public/admin --emptyOutDir",
-    "deploy": "pnpm run build:public && pnpm exec wrangler deploy"
+    "bundle:worker": "rm -rf .worker-bundle && pnpm exec wrangler deploy --dry-run --outdir=.worker-bundle --config=wrangler-build.toml && cp .worker-bundle/worker.js public/_worker.js",
+    "deploy": "pnpm run build:public && pnpm run bundle:worker && pnpm exec wrangler pages deploy public/ --project-name=qsycommentsys --commit-dirty=true --branch=main"
   },
   "devDependencies": {
     "wrangler": "^4.96.0"

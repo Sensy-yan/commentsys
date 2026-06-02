@@ -1,6 +1,7 @@
 node_modules/
 dist/
 public/
+.worker-bundle/
 .env
 .env.local
 .dev.vars

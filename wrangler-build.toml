@@ -1,0 +1,7 @@
+# Worker-mode config used ONLY by `pnpm run bundle:worker` to produce
+# the bundled `public/_worker.js` that Pages will run.
+# Actual deploy uses wrangler.toml (Pages mode).
+name = "qsycommentsys-bundle"
+main = "server/src/worker.ts"
+compatibility_date = "2025-01-15"
+compatibility_flags = ["nodejs_compat"]
