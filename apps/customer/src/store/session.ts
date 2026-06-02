@@ -5,5 +5,7 @@ export const useSessionStore = defineStore('session', {
     sessionId: '' as string,
     storeId: '' as string,
     rating: 0,
+    storeName: '' as string,
+    platformUrls: {} as Record<string, string>,
   }),
 });

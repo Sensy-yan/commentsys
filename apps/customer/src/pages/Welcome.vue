@@ -15,6 +15,11 @@ onMounted(async () => {
   const storeId = (route.query.s as string) || 'default-store';
   session.storeId = storeId;
   try {
+    const cfg = await api.getStoreConfig(storeId);
+    session.storeName = cfg.name;
+    session.platformUrls = cfg.platformUrls;
+  } catch { /* ignore */ }
+  try {
     const { sessionId } = await api.startSession(storeId);
     session.sessionId = sessionId;
   } catch (e: any) {

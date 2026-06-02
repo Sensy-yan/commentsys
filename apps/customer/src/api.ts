@@ -41,4 +41,7 @@ export const api = {
     http<{ items: Array<{ id: string; url: string; type: string }> }>(
       `/photos/recommend?sessionId=${sessionId}&platform=${platform}&limit=5`,
     ),
+
+  getStoreConfig: (storeId: string) =>
+    http<{ name: string; platformUrls: Record<string, string> }>(`/config/${storeId}`),
 };

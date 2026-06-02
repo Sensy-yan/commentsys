@@ -230,5 +230,16 @@ export function buildCustomerRouter(db: DB) {
     return c.json({ ok: true });
   });
 
+  app.get('/config/:storeId', (c) => {
+    const storeId = c.req.param('storeId');
+    const row = db.prepare('SELECT name, platform_urls FROM store_config WHERE store_id=?')
+      .get(storeId) as any;
+    if (!row) return c.json({ name: '', platformUrls: {} });
+    return c.json({
+      name: row.name ?? '',
+      platformUrls: JSON.parse(row.platform_urls ?? '{}'),
+    });
+  });
+
   return app;
 }

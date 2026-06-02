@@ -72,8 +72,7 @@ async function copyAndJump() {
     }),
   }).catch(() => {});
 
-  // 暂时不传 fallbackUrl,Task 6.3 会从 session.platformUrls 拉
-  jumpToApp(platform.value);
+  jumpToApp(platform.value, session.platformUrls[platform.value]);
 }
 
 onMounted(async () => { await regenerate(); await loadPhotos(); });
