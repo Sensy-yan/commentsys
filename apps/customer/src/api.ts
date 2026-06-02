@@ -36,4 +36,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ sessionId, platform, tags, technician }),
     }),
+
+  recommendPhotos: (sessionId: string, platform: string) =>
+    http<{ items: Array<{ id: string; url: string; type: string }> }>(
+      `/photos/recommend?sessionId=${sessionId}&platform=${platform}&limit=5`,
+    ),
 };

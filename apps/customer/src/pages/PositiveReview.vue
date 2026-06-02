@@ -10,6 +10,22 @@ const technician = ref('');
 const text = ref('');
 const source = ref<'ai' | 'template' | 'stub' | ''>('');
 const loading = ref(false);
+const photos = ref<Array<{ id: string; url: string }>>([]);
+const selectedPhotos = ref<string[]>([]);
+
+async function loadPhotos() {
+  if (!session.sessionId) return;
+  try {
+    const { items } = await api.recommendPhotos(session.sessionId, platform.value);
+    photos.value = items;
+  } catch { /* 静默失败:照片是可选项 */ }
+}
+
+function togglePhoto(id: string) {
+  const i = selectedPhotos.value.indexOf(id);
+  if (i >= 0) selectedPhotos.value.splice(i, 1);
+  else if (selectedPhotos.value.length < 3) selectedPhotos.value.push(id);
+}
 
 const PLATFORM_LABEL: Record<string, string> = {
   dianping: '大众点评', meituan: '美团',
@@ -44,7 +60,7 @@ async function copyAndJump() {
   }
 }
 
-onMounted(regenerate);
+onMounted(async () => { await regenerate(); await loadPhotos(); });
 </script>
 
 <template>
@@ -55,7 +71,7 @@ onMounted(regenerate);
       <div class="text-sm text-gray-600 mb-2">发到哪个平台?</div>
       <div class="grid grid-cols-4 gap-2">
         <button v-for="(label, key) in PLATFORM_LABEL" :key="key"
-          @click="platform = (key as any); regenerate()"
+          @click="platform = (key as any); regenerate(); loadPhotos();"
           class="py-2 rounded border text-sm"
           :class="platform === key ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300'">
           {{ label }}
@@ -97,6 +113,22 @@ onMounted(regenerate);
         <span v-if="source === 'ai'">✨ AI 生成</span>
         <span v-else-if="source === 'template'">📝 模板生成</span>
       </div>
+    </div>
+
+    <div v-if="photos.length" class="space-y-2">
+      <div class="text-sm text-gray-600">搭配照片(可选,最多 3 张)</div>
+      <div class="grid grid-cols-5 gap-1">
+        <div v-for="p in photos" :key="p.id"
+          class="relative aspect-square cursor-pointer"
+          @click="togglePhoto(p.id)">
+          <img :src="p.url" class="w-full h-full object-cover rounded"/>
+          <div v-if="selectedPhotos.includes(p.id)"
+            class="absolute inset-0 bg-blue-500/30 border-2 border-blue-500 rounded flex items-center justify-center">
+            <span class="bg-blue-500 text-white text-xs px-1 rounded">{{ selectedPhotos.indexOf(p.id) + 1 }}</span>
+          </div>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500">提示:打开 App 后,文案会自动复制,图片请在 App 内长按下载或截图</p>
     </div>
 
     <button @click="copyAndJump" :disabled="!text"
