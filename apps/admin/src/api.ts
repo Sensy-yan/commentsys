@@ -43,6 +43,10 @@ export const api = {
     http<{ token: string; operator: { id: string; name: string; role: string; storeId: string } }>(
       '/auth/verify', { method: 'POST', body: JSON.stringify({ phone, code }) },
     ),
+  devLogin: (phone: string) =>
+    http<{ token: string; operator: { id: string; name: string; role: string; storeId: string } }>(
+      '/auth/dev-login', { method: 'POST', body: JSON.stringify({ phone }) },
+    ),
   getStats: (range: 'today' | 'week' | 'month') =>
     http<Stats>(`/admin/stats?range=${range}`),
   listComplaints: (status: 'pending' | 'handled') =>

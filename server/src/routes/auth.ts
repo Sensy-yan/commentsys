@@ -73,5 +73,28 @@ export function buildAuthRouter(db: DB, jwtSecret: string, smsConfig: SmsConfig)
     });
   });
 
+  // Dev-only: phone-only login (no SMS code). Disabled in production.
+  app.post('/dev-login', async (c) => {
+    if (process.env.NODE_ENV === 'production') {
+      return c.json({ error: 'not_available' }, 404);
+    }
+    const body = await c.req.json().catch(() => ({}));
+    const parsed = phoneSchema.safeParse(body);
+    if (!parsed.success) return c.json({ error: 'bad_phone' }, 400);
+
+    const op = db.prepare(
+      'SELECT id, store_id, name, role FROM operators WHERE phone=?',
+    ).get(parsed.data.phone) as any;
+    if (!op) return c.json({ error: 'not_authorized' }, 403);
+
+    db.prepare('UPDATE operators SET last_login_at=? WHERE id=?').run(Date.now(), op.id);
+
+    const token = await signToken({ operatorId: op.id, storeId: op.store_id }, jwtSecret);
+    return c.json({
+      token,
+      operator: { id: op.id, name: op.name, role: op.role, storeId: op.store_id },
+    });
+  });
+
   return app;
 }
