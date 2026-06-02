@@ -6,6 +6,7 @@ import { env } from './env.js';
 import { getDb } from './db.js';
 import { buildCustomerRouter } from './routes/customer.js';
 import { buildAuthRouter } from './routes/auth.js';
+import { buildStatsRouter } from './routes/stats.js';
 
 mkdirSync(dirname(env.DB_PATH), { recursive: true });
 const db = getDb();
@@ -18,6 +19,7 @@ app.route('/api/auth', buildAuthRouter(db, env.JWT_SECRET, {
   ALIYUN_SMS_SECRET: env.ALIYUN_SMS_SECRET,
   ALIYUN_SMS_SIGN: env.ALIYUN_SMS_SIGN,
 }));
+app.route('/api/admin/stats', buildStatsRouter(db, env.JWT_SECRET));
 
 serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   console.log(`Server listening on http://localhost:${info.port}`);
