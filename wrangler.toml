@@ -14,4 +14,6 @@ database_name = "qsycommetsys"
 database_id = "9b1d26fe-8650-47fb-bbda-c984e0b5a4fb"
 
 [vars]
-NODE_ENV = "production"
+# Set to "development" so the phone-only `/api/auth/dev-login` endpoint stays enabled.
+# When you wire real SMS (Aliyun) later, flip this to "production".
+NODE_ENV = "development"
