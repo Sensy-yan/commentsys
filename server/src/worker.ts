@@ -7,6 +7,7 @@ import { buildComplaintsRouter } from './routes/complaints.js';
 import { buildPhotosRouter } from './routes/photos.js';
 import { buildConfigRouter } from './routes/config.js';
 import { buildQrcodeRouter } from './routes/qrcode.js';
+import { buildReviewsRouter } from './routes/reviews.js';
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -19,6 +20,7 @@ app.route('/api/admin/complaints', buildComplaintsRouter());
 app.route('/api/admin/photos', buildPhotosRouter());
 app.route('/api/admin/config', buildConfigRouter());
 app.route('/api/admin/qrcode', buildQrcodeRouter());
+app.route('/api/admin/reviews', buildReviewsRouter());
 
 // Serve photo BLOBs from D1
 app.get('/uploads/:id', async (c) => {

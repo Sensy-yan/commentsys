@@ -162,7 +162,14 @@ onMounted(load);
       </button>
 
       <!-- 快捷入口 -->
-      <div class="grid grid-cols-4 gap-2 pt-1">
+      <div class="grid grid-cols-5 gap-2 pt-1">
+        <button
+          @click="router.push('/reviews')"
+          class="card py-3.5 flex flex-col items-center gap-1.5 hover:shadow-card-hover transition-all duration-200 active:scale-[0.97]"
+        >
+          <span class="text-lg">⭐</span>
+          <span class="text-xs text-slate-600 font-medium">评价</span>
+        </button>
         <button
           @click="router.push('/complaints')"
           class="card py-3.5 flex flex-col items-center gap-1.5 hover:shadow-card-hover transition-all duration-200 active:scale-[0.97]"

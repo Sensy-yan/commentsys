@@ -80,6 +80,22 @@ export const api = {
   deletePhoto: (id: string) =>
     http<{ ok: true }>(`/admin/photos/${id}`, { method: 'DELETE' }),
 
+  listReviews: (range: 'today' | 'week' | 'month' | 'all') =>
+    http<{
+      range: string;
+      items: Array<{
+        id: string;
+        rating: number;
+        platform: string;
+        tags: string[];
+        technician: string;
+        text: string;
+        photo_count: number;
+        jumped: boolean;
+        created_at: number;
+      }>;
+    }>(`/admin/reviews?range=${range}`),
+
   getConfig: () =>
     http<any>('/admin/config'),
   saveConfig: (data: any) =>
