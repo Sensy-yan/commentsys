@@ -8,6 +8,7 @@ const platform = ref<'dianping' | 'meituan' | 'douyin' | 'xiaohongshu'>('dianpin
 const tags = ref<string[]>([]);
 const technician = ref('');
 const text = ref('');
+const source = ref<'ai' | 'template' | 'stub' | ''>('');
 const loading = ref(false);
 
 const PLATFORM_LABEL: Record<string, string> = {
@@ -21,10 +22,11 @@ async function regenerate() {
   if (!session.sessionId) return;
   loading.value = true;
   try {
-    const { text: t } = await api.generateReview(
+    const out = await api.generateReview(
       session.sessionId, platform.value, tags.value, technician.value,
     );
-    text.value = t;
+    text.value = out.text;
+    source.value = out.source;
   } finally { loading.value = false; }
 }
 
@@ -90,6 +92,10 @@ onMounted(regenerate);
       <div class="flex justify-end mt-2 gap-2">
         <button @click="regenerate" :disabled="loading"
           class="text-sm text-blue-500 disabled:text-gray-300">换一条</button>
+      </div>
+      <div class="text-xs text-gray-400 text-right mt-1">
+        <span v-if="source === 'ai'">✨ AI 生成</span>
+        <span v-else-if="source === 'template'">📝 模板生成</span>
       </div>
     </div>
 
