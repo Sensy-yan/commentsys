@@ -43,5 +43,10 @@ export const api = {
     ),
 
   getStoreConfig: (storeId: string) =>
-    http<{ name: string; platformUrls: Record<string, string> }>(`/config/${storeId}`),
+    http<{
+      name: string;
+      platformUrls: Record<string, string>;
+      technicians: string[];
+      projects: string[];
+    }>(`/config/${storeId}`),
 };

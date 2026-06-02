@@ -230,12 +230,15 @@ export function buildCustomerRouter() {
 
   app.get('/config/:storeId', async (c) => {
     const storeId = c.req.param('storeId');
-    const row = await c.env.DB.prepare('SELECT name, platform_urls FROM store_config WHERE store_id=?')
-      .bind(storeId).first<any>();
-    if (!row) return c.json({ name: '', platformUrls: {} });
+    const row = await c.env.DB.prepare(
+      'SELECT name, platform_urls, technicians, projects FROM store_config WHERE store_id=?',
+    ).bind(storeId).first<any>();
+    if (!row) return c.json({ name: '', platformUrls: {}, technicians: [], projects: [] });
     return c.json({
       name: row.name ?? '',
       platformUrls: JSON.parse(row.platform_urls ?? '{}'),
+      technicians: JSON.parse(row.technicians ?? '[]'),
+      projects: JSON.parse(row.projects ?? '[]'),
     });
   });
 

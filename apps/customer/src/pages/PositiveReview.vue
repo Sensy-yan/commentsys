@@ -33,8 +33,9 @@ const PLATFORM_LABEL: Record<string, string> = {
   dianping: '点评', meituan: '美团',
   douyin: '抖音', xiaohongshu: '小红书',
 };
-const AVAILABLE_TAGS = ['头皮检测', '头皮排毒', '防脱护理', '中药养发', '头皮 SPA', '育发疗程'];
-const TECHNICIANS = ['小王', '小李', '小张'];
+// Fall back to defaults if Welcome.vue hasn't populated the session yet
+const DEFAULT_TAGS = ['头皮检测', '头皮排毒', '防脱护理', '中药养发', '头皮 SPA', '育发疗程'];
+const DEFAULT_TECHNICIANS = ['店内技师'];
 
 async function regenerate() {
   if (!session.sessionId) return;
@@ -113,7 +114,7 @@ onMounted(async () => { await regenerate(); await loadPhotos(); });
         <div class="label mb-1.5">体验项目</div>
         <div class="flex flex-wrap gap-1.5">
           <button
-            v-for="t in AVAILABLE_TAGS"
+            v-for="t in (session.projects.length ? session.projects : DEFAULT_TAGS)"
             :key="t"
             @click="toggleTag(t)"
             class="px-2.5 py-1 rounded-full border text-xs transition-all duration-200 active:scale-[0.97]"
@@ -129,7 +130,7 @@ onMounted(async () => { await regenerate(); await loadPhotos(); });
         <div class="label shrink-0">技师</div>
         <div class="flex gap-1.5 flex-1">
           <button
-            v-for="t in TECHNICIANS"
+            v-for="t in (session.technicians.length ? session.technicians : DEFAULT_TECHNICIANS)"
             :key="t"
             @click="technician = t"
             class="px-3 py-1 rounded-full border text-xs transition-all duration-200 active:scale-[0.97]"

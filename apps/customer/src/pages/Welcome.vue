@@ -18,6 +18,8 @@ onMounted(async () => {
     const cfg = await api.getStoreConfig(storeId);
     session.storeName = cfg.name;
     session.platformUrls = cfg.platformUrls;
+    session.technicians = cfg.technicians ?? [];
+    session.projects = cfg.projects ?? [];
   } catch { /* ignore */ }
   try {
     const { sessionId } = await api.startSession(storeId);
