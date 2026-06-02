@@ -9,6 +9,12 @@ interface Stats {
   pendingComplaints: number;
 }
 
+interface Complaint {
+  id: string; rating: number; message: string; contact: string | null;
+  status: 'pending' | 'handled'; handler_note: string | null;
+  created_at: number; handled_at: number | null;
+}
+
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const token = localStorage.getItem('token');
   const res = await fetch(BASE + path, {
@@ -33,4 +39,10 @@ export const api = {
     ),
   getStats: (range: 'today' | 'week' | 'month') =>
     http<Stats>(`/admin/stats?range=${range}`),
+  listComplaints: (status: 'pending' | 'handled') =>
+    http<{ items: Complaint[] }>(`/admin/complaints?status=${status}`),
+  handleComplaint: (id: string, note: string) =>
+    http<{ ok: true }>(`/admin/complaints/${id}/handle`, {
+      method: 'POST', body: JSON.stringify({ note }),
+    }),
 };

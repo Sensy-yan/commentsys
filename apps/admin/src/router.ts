@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from './pages/Login.vue';
 import Dashboard from './pages/Dashboard.vue';
+import Complaints from './pages/Complaints.vue';
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -8,6 +9,7 @@ export const router = createRouter({
     { path: '/', redirect: '/login' },
     { path: '/login', component: Login },
     { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true } },
+    { path: '/complaints', component: Complaints, meta: { requiresAuth: true } },
   ],
 });
 
