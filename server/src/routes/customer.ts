@@ -26,6 +26,12 @@ const generateSchema = z.object({
   technician: z.string().default(''),
 });
 
+const recommendSchema = z.object({
+  sessionId: z.string().min(1),
+  platform: z.enum(PLATFORMS),
+  limit: z.coerce.number().min(1).max(10).default(5),
+});
+
 export function buildCustomerRouter(db: DB) {
   const app = new Hono();
 
@@ -127,6 +133,42 @@ export function buildCustomerRouter(db: DB) {
       console.error('LLM failed, falling back to template:', err);
       return c.json({ text: composeFromPool(input), source: 'template' });
     }
+  });
+
+  app.get('/photos/recommend', (c) => {
+    const parsed = recommendSchema.safeParse({
+      sessionId: c.req.query('sessionId'),
+      platform: c.req.query('platform'),
+      limit: c.req.query('limit'),
+    });
+    if (!parsed.success) return c.json({ error: 'bad_request' }, 400);
+
+    const session = db.prepare('SELECT store_id, rating FROM sessions WHERE id=?')
+      .get(parsed.data.sessionId) as any;
+    if (!session) return c.json({ error: 'session_not_found' }, 404);
+
+    const allPhotos = db.prepare(
+      'SELECT id, url, type, platforms, rating_match FROM photos WHERE store_id=?',
+    ).all(session.store_id) as any[];
+
+    const filtered = allPhotos
+      .map((p) => ({
+        ...p,
+        platforms: JSON.parse(p.platforms) as string[],
+        rating_match: JSON.parse(p.rating_match) as number[],
+      }))
+      .filter((p) =>
+        p.platforms.includes(parsed.data.platform) &&
+        (session.rating == null || p.rating_match.includes(session.rating))
+      );
+
+    // 随机洗牌后取 limit 张
+    for (let i = filtered.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+    }
+
+    return c.json({ items: filtered.slice(0, parsed.data.limit) });
   });
 
   return app;
