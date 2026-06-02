@@ -1,0 +1,19 @@
+services:
+  commentsys:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      NODE_ENV: production
+      PORT: 8787
+      DB_PATH: /data/commentsys.db
+      JWT_SECRET: ${JWT_SECRET}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      WECOM_WEBHOOK_URL: ${WECOM_WEBHOOK_URL}
+      CUSTOMER_BASE_URL: ${CUSTOMER_BASE_URL}
+      ALIYUN_SMS_ACCESS_KEY: ${ALIYUN_SMS_ACCESS_KEY}
+      ALIYUN_SMS_SECRET: ${ALIYUN_SMS_SECRET}
+      ALIYUN_SMS_SIGN: ${ALIYUN_SMS_SIGN}
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

@@ -36,6 +36,12 @@ app.route('/api/admin/photos', buildPhotosRouter(db, photoStore, env.JWT_SECRET)
 app.route('/api/admin/config', buildConfigRouter(db, env.JWT_SECRET));
 app.route('/api/admin/qrcode', buildQrcodeRouter(db, env.JWT_SECRET, env.CUSTOMER_BASE_URL));
 
+// 静态托管 admin 和 customer 前端构建产物(prod 下)
+app.use('/customer/*', serveStatic({ root: '../public', rewriteRequestPath: (p) => p.replace(/^\/customer/, '/customer') }));
+app.use('/admin/*', serveStatic({ root: '../public', rewriteRequestPath: (p) => p.replace(/^\/admin/, '/admin') }));
+app.get('/customer', (c) => c.redirect('/customer/index.html'));
+app.get('/admin', (c) => c.redirect('/admin/index.html'));
+
 serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   console.log(`Server listening on http://localhost:${info.port}`);
 });
