@@ -32,6 +32,7 @@ onMounted(load);
       <div class="flex gap-2 text-sm">
         <button @click="router.push('/photos')" class="text-blue-500">照片库</button>
         <button @click="router.push('/complaints')" class="text-blue-500">差评</button>
+        <button @click="router.push('/qrcode')" class="text-blue-500">二维码</button>
         <button @click="router.push('/settings')" class="text-blue-500">设置</button>
       </div>
     </div>
