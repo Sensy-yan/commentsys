@@ -2,6 +2,8 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import type { DB } from '../db.js';
+import { generateReview } from '../services/llm.js';
+import { composeFromPool } from '../services/templatePool.js';
 
 const startSessionSchema = z.object({
   storeId: z.string().min(1),
@@ -95,17 +97,36 @@ export function buildCustomerRouter(db: DB) {
     const parsed = generateSchema.safeParse(body);
     if (!parsed.success) return c.json({ error: 'bad_request' }, 400);
 
-    const stubByPlatform: Record<string, string> = {
-      dianping: `今天来这家店做了${parsed.data.tags[0] ?? '头皮检测'}，${parsed.data.technician || '技师'}手法专业，头皮明显感觉清爽很多。环境也不错，整体性价比高，推荐脱发困扰的朋友试试。`,
-      meituan: `做了一次${parsed.data.tags[0] ?? '头皮检测'}，效果不错，技师专业，会再来。`,
-      douyin: `头皮养护打卡！${parsed.data.tags[0] ?? '头皮检测'}做完整个人都轻松了，建议姐妹们试一次。`,
-      xiaohongshu: `姐妹们我又来分享啦~ ${parsed.data.tags[0] ?? '头皮检测'}体验感超棒，技师手法细致，头皮真的轻松了好多！价格也合理🤍`,
+    const session = db.prepare('SELECT rating FROM sessions WHERE id=?').get(parsed.data.sessionId) as any;
+    const rating = session?.rating ?? 5;
+
+    const input = {
+      platform: parsed.data.platform,
+      rating,
+      tags: parsed.data.tags,
+      technician: parsed.data.technician,
     };
 
-    return c.json({
-      text: stubByPlatform[parsed.data.platform],
-      source: 'stub',
-    });
+    // Read fresh each request so tests can flip the env var.
+    // Production: NODE_ENV=production, env is set once at deploy, so this is fine.
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+
+    // 1) 没配 API key,直接走模板
+    if (!apiKey) {
+      return c.json({ text: composeFromPool(input), source: 'template' });
+    }
+
+    // 2) 调 LLM,失败兜底
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10_000);
+      const out = await generateReview(input, apiKey, controller.signal);
+      clearTimeout(timer);
+      return c.json({ text: out.text, source: 'ai' });
+    } catch (err) {
+      console.error('LLM failed, falling back to template:', err);
+      return c.json({ text: composeFromPool(input), source: 'template' });
+    }
   });
 
   return app;
