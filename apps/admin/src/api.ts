@@ -15,6 +15,12 @@ interface Complaint {
   created_at: number; handled_at: number | null;
 }
 
+interface Photo {
+  id: string; url: string; type: string;
+  platforms: string[]; rating_match: number[]; tags: string[];
+  use_count: number; created_at: number;
+}
+
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const token = localStorage.getItem('token');
   const res = await fetch(BASE + path, {
@@ -45,4 +51,28 @@ export const api = {
     http<{ ok: true }>(`/admin/complaints/${id}/handle`, {
       method: 'POST', body: JSON.stringify({ note }),
     }),
+  listPhotos: () =>
+    http<{ items: Photo[] }>('/admin/photos'),
+
+  uploadPhoto: async (file: File, meta: {
+    type: string; platforms: string[]; rating_match: number[]; tags: string[];
+  }) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('type', meta.type);
+    form.append('platforms', JSON.stringify(meta.platforms));
+    form.append('rating_match', JSON.stringify(meta.rating_match));
+    form.append('tags', JSON.stringify(meta.tags));
+    const token = localStorage.getItem('token');
+    const res = await fetch('/api/admin/photos', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  deletePhoto: (id: string) =>
+    http<{ ok: true }>(`/admin/photos/${id}`, { method: 'DELETE' }),
 };

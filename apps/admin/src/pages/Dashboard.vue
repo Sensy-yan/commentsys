@@ -29,8 +29,10 @@ onMounted(load);
   <div class="p-4 max-w-md mx-auto">
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-xl font-bold">数据看板</h1>
-      <button @click="router.push('/complaints')"
-        class="text-sm text-blue-500">差评 →</button>
+      <div class="flex gap-2 text-sm">
+        <button @click="router.push('/photos')" class="text-blue-500">照片库</button>
+        <button @click="router.push('/complaints')" class="text-blue-500">差评</button>
+      </div>
     </div>
 
     <div class="flex gap-2 mb-4">
