@@ -1,5 +1,14 @@
 const BASE = '/api';
 
+interface Stats {
+  range: string;
+  totalSessions: number;
+  ratingBreakdown: Record<string, number>;
+  platformJumps: Record<string, number>;
+  totalJumps: number;
+  pendingComplaints: number;
+}
+
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const token = localStorage.getItem('token');
   const res = await fetch(BASE + path, {
@@ -22,4 +31,6 @@ export const api = {
     http<{ token: string; operator: { id: string; name: string; role: string; storeId: string } }>(
       '/auth/verify', { method: 'POST', body: JSON.stringify({ phone, code }) },
     ),
+  getStats: (range: 'today' | 'week' | 'month') =>
+    http<Stats>(`/admin/stats?range=${range}`),
 };
