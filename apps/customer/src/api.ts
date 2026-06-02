@@ -30,4 +30,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ sessionId, message, contact }),
     }),
+
+  generateReview: (sessionId: string, platform: string, tags: string[], technician: string) =>
+    http<{ text: string; source: 'ai' | 'template' | 'stub' }>('/reviews/generate', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, platform, tags, technician }),
+    }),
 };

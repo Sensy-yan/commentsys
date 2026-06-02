@@ -1,30 +1,101 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import { api } from '../api.js';
 import { useSessionStore } from '../store/session.js';
 
 const session = useSessionStore();
+const platform = ref<'dianping' | 'meituan' | 'douyin' | 'xiaohongshu'>('dianping');
+const tags = ref<string[]>([]);
+const technician = ref('');
+const text = ref('');
+const loading = ref(false);
 
-const stubText = '今天来这家店做了头皮检测,小王手法专业,头皮感觉舒服多了。环境也不错,推荐脱发困扰的朋友试试。';
+const PLATFORM_LABEL: Record<string, string> = {
+  dianping: '大众点评', meituan: '美团',
+  douyin: '抖音', xiaohongshu: '小红书',
+};
+const AVAILABLE_TAGS = ['头皮检测', '头皮排毒', '防脱护理', '中药养发', '头皮 SPA', '育发疗程'];
+const TECHNICIANS = ['小王', '小李', '小张'];
 
-async function copyAndJump(platform: string) {
+async function regenerate() {
+  if (!session.sessionId) return;
+  loading.value = true;
   try {
-    await navigator.clipboard.writeText(stubText);
-    alert(`已复制评价!请打开${platform} App 长按粘贴`);
+    const { text: t } = await api.generateReview(
+      session.sessionId, platform.value, tags.value, technician.value,
+    );
+    text.value = t;
+  } finally { loading.value = false; }
+}
+
+function toggleTag(tag: string) {
+  const i = tags.value.indexOf(tag);
+  if (i >= 0) tags.value.splice(i, 1); else tags.value.push(tag);
+}
+
+async function copyAndJump() {
+  try {
+    await navigator.clipboard.writeText(text.value);
+    alert(`已复制评价!请打开 ${PLATFORM_LABEL[platform.value]} App 长按粘贴`);
   } catch {
     alert('请手动复制评价内容');
   }
 }
+
+onMounted(regenerate);
 </script>
 
 <template>
-  <div class="p-6">
-    <h2 class="text-xl font-bold mb-4">公域评价页(占位)</h2>
-    <p class="text-sm text-gray-600 mb-4">星级:{{ session.rating }}</p>
-    <div class="bg-white rounded p-4 mb-4 border border-gray-200">{{ stubText }}</div>
-    <div class="grid grid-cols-2 gap-3">
-      <button @click="copyAndJump('点评')" class="bg-orange-500 text-white py-3 rounded">复制并打开点评</button>
-      <button @click="copyAndJump('美团')" class="bg-yellow-500 text-white py-3 rounded">复制并打开美团</button>
-      <button @click="copyAndJump('抖音')" class="bg-black text-white py-3 rounded">复制并打开抖音</button>
-      <button @click="copyAndJump('小红书')" class="bg-red-500 text-white py-3 rounded">复制并打开小红书</button>
+  <div class="p-4 space-y-4">
+    <h2 class="text-lg font-bold">写一条好评</h2>
+
+    <div>
+      <div class="text-sm text-gray-600 mb-2">发到哪个平台?</div>
+      <div class="grid grid-cols-4 gap-2">
+        <button v-for="(label, key) in PLATFORM_LABEL" :key="key"
+          @click="platform = (key as any); regenerate()"
+          class="py-2 rounded border text-sm"
+          :class="platform === key ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300'">
+          {{ label }}
+        </button>
+      </div>
     </div>
+
+    <div>
+      <div class="text-sm text-gray-600 mb-2">今天体验了什么?</div>
+      <div class="flex flex-wrap gap-2">
+        <button v-for="t in AVAILABLE_TAGS" :key="t" @click="toggleTag(t)"
+          class="px-3 py-1 rounded-full border text-sm"
+          :class="tags.includes(t) ? 'bg-green-100 border-green-500' : 'border-gray-300'">
+          {{ t }}
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="text-sm text-gray-600 mb-2">服务技师</div>
+      <div class="flex gap-2">
+        <button v-for="t in TECHNICIANS" :key="t" @click="technician = t"
+          class="px-3 py-1 rounded-full border text-sm"
+          :class="technician === t ? 'bg-green-100 border-green-500' : 'border-gray-300'">
+          {{ t }}
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded p-3">
+      <div v-if="loading" class="text-gray-500 text-sm">AI 正在为您写评价...</div>
+      <textarea v-else v-model="text" rows="6"
+        class="w-full text-sm focus:outline-none resize-none"/>
+      <div class="flex justify-end mt-2 gap-2">
+        <button @click="regenerate" :disabled="loading"
+          class="text-sm text-blue-500 disabled:text-gray-300">换一条</button>
+      </div>
+    </div>
+
+    <button @click="copyAndJump" :disabled="!text"
+      class="w-full bg-orange-500 disabled:bg-gray-300 text-white py-3 rounded">
+      复制评价 + 打开 {{ PLATFORM_LABEL[platform] }}
+    </button>
   </div>
 </template>
