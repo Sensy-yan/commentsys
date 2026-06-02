@@ -14,6 +14,7 @@ const schema = z.object({
   ALIYUN_OSS_SECRET: z.string().optional(),
   WECOM_WEBHOOK_URL: z.string().optional(),
   JWT_SECRET: z.string().default('dev-secret-change-me'),
+  CUSTOMER_BASE_URL: z.string().default('http://localhost:5173'),
 });
 
 export const env = schema.parse(process.env);

@@ -11,6 +11,7 @@ import { buildStatsRouter } from './routes/stats.js';
 import { buildComplaintsRouter } from './routes/complaints.js';
 import { buildPhotosRouter } from './routes/photos.js';
 import { buildConfigRouter } from './routes/config.js';
+import { buildQrcodeRouter } from './routes/qrcode.js';
 import { LocalPhotoStore } from './services/photoStore.js';
 
 mkdirSync(dirname(env.DB_PATH), { recursive: true });
@@ -33,6 +34,7 @@ app.route('/api/admin/stats', buildStatsRouter(db, env.JWT_SECRET));
 app.route('/api/admin/complaints', buildComplaintsRouter(db, env.JWT_SECRET));
 app.route('/api/admin/photos', buildPhotosRouter(db, photoStore, env.JWT_SECRET));
 app.route('/api/admin/config', buildConfigRouter(db, env.JWT_SECRET));
+app.route('/api/admin/qrcode', buildQrcodeRouter(db, env.JWT_SECRET, env.CUSTOMER_BASE_URL));
 
 serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   console.log(`Server listening on http://localhost:${info.port}`);
