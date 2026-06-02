@@ -1,4 +1,4 @@
-const BASE = '/api/admin';
+const BASE = '/api';
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const token = localStorage.getItem('token');
@@ -9,13 +9,17 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
     },
     ...init,
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API ${res.status}: ${text}`);
-  }
+  if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
   return res.json() as Promise<T>;
 }
 
 export const api = {
-  ping: () => http<{ ok: true }>('/ping'),
+  requestCode: (phone: string) =>
+    http<{ ok: true }>('/auth/code', {
+      method: 'POST', body: JSON.stringify({ phone }),
+    }),
+  verifyCode: (phone: string, code: string) =>
+    http<{ token: string; operator: { id: string; name: string; role: string; storeId: string } }>(
+      '/auth/verify', { method: 'POST', body: JSON.stringify({ phone, code }) },
+    ),
 };
