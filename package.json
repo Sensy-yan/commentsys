@@ -3,12 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@9.0.0",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev:server": "pnpm --filter server dev",
     "dev:customer": "pnpm --filter customer dev",
     "dev:admin": "pnpm --filter admin dev",
-    "test": "pnpm -r test",
-    "build": "pnpm -r build"
+    "build:public": "pnpm --filter customer build --outDir ../../public --emptyOutDir && pnpm --filter admin build --outDir ../../public/admin --emptyOutDir",
+    "deploy": "pnpm run build:public && pnpm exec wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.96.0"
   }
 }

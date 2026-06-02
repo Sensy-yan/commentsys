@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { randomUUID } from 'node:crypto';
-import type { DB } from '../db.js';
+import type { Env, Variables } from '../types.js';
 import { generateReview } from '../services/llm.js';
 import { composeFromPool } from '../services/templatePool.js';
 import { notifyComplaint } from '../services/notification.js';
@@ -42,20 +41,20 @@ const logJumpSchema = z.object({
   text: z.string(),
 });
 
-export function buildCustomerRouter(db: DB) {
-  const app = new Hono();
+export function buildCustomerRouter() {
+  const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
   app.post('/sessions', async (c) => {
     const body = await c.req.json().catch(() => ({}));
     const parsed = startSessionSchema.safeParse(body);
     if (!parsed.success) return c.json({ error: 'bad_request' }, 400);
 
-    const id = randomUUID();
+    const id = crypto.randomUUID();
     const ua = c.req.header('user-agent') ?? '';
-    db.prepare(
+    await c.env.DB.prepare(
       `INSERT INTO sessions (id, store_id, user_agent, is_wechat, created_at)
        VALUES (?, ?, ?, ?, ?)`,
-    ).run(id, parsed.data.storeId, ua, parsed.data.isWeChat ? 1 : 0, Date.now());
+    ).bind(id, parsed.data.storeId, ua, parsed.data.isWeChat ? 1 : 0, Date.now()).run();
 
     return c.json({ sessionId: id });
   });
@@ -66,12 +65,12 @@ export function buildCustomerRouter(db: DB) {
     const parsed = ratingSchema.safeParse(body);
     if (!parsed.success) return c.json({ error: 'bad_request' }, 400);
 
-    const exists = db.prepare('SELECT 1 FROM sessions WHERE id=?').get(id);
+    const exists = await c.env.DB.prepare('SELECT 1 FROM sessions WHERE id=?').bind(id).first();
     if (!exists) return c.json({ error: 'session_not_found' }, 404);
 
-    db.prepare('UPDATE sessions SET rating=?, updated_at=? WHERE id=?').run(
+    await c.env.DB.prepare('UPDATE sessions SET rating=?, updated_at=? WHERE id=?').bind(
       parsed.data.rating, Date.now(), id,
-    );
+    ).run();
 
     return c.json({
       route: parsed.data.rating >= 4 ? 'positive' : 'complaint',
@@ -83,19 +82,19 @@ export function buildCustomerRouter(db: DB) {
     const parsed = complaintSchema.safeParse(body);
     if (!parsed.success) return c.json({ error: 'bad_request' }, 400);
 
-    const session = db.prepare(
+    const session = await c.env.DB.prepare(
       'SELECT store_id, rating FROM sessions WHERE id=?',
-    ).get(parsed.data.sessionId) as any;
+    ).bind(parsed.data.sessionId).first<any>();
     if (!session) return c.json({ error: 'session_not_found' }, 404);
     if (!session.rating || session.rating > 3) {
       return c.json({ error: 'rating_not_eligible' }, 400);
     }
 
-    const id = randomUUID();
-    db.prepare(
+    const id = crypto.randomUUID();
+    await c.env.DB.prepare(
       `INSERT INTO complaints (id, session_id, store_id, rating, message, contact, status, created_at)
        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
-    ).run(
+    ).bind(
       id,
       parsed.data.sessionId,
       session.store_id,
@@ -103,11 +102,11 @@ export function buildCustomerRouter(db: DB) {
       parsed.data.message,
       parsed.data.contact ?? null,
       Date.now(),
-    );
+    ).run();
 
-    const config = db.prepare('SELECT wecom_webhook FROM store_config WHERE store_id=?')
-      .get(session.store_id) as any;
-    const webhookUrl = config?.wecom_webhook ?? process.env.WECOM_WEBHOOK_URL ?? '';
+    const config = await c.env.DB.prepare('SELECT wecom_webhook FROM store_config WHERE store_id=?')
+      .bind(session.store_id).first<any>();
+    const webhookUrl = config?.wecom_webhook ?? c.env.WECOM_WEBHOOK_URL ?? '';
 
     notifyComplaint({
       webhookUrl,
@@ -126,7 +125,8 @@ export function buildCustomerRouter(db: DB) {
     const parsed = generateSchema.safeParse(body);
     if (!parsed.success) return c.json({ error: 'bad_request' }, 400);
 
-    const session = db.prepare('SELECT rating FROM sessions WHERE id=?').get(parsed.data.sessionId) as any;
+    const session = await c.env.DB.prepare('SELECT rating FROM sessions WHERE id=?')
+      .bind(parsed.data.sessionId).first<any>();
     const rating = session?.rating ?? 5;
 
     const input = {
@@ -136,9 +136,7 @@ export function buildCustomerRouter(db: DB) {
       technician: parsed.data.technician,
     };
 
-    // Read fresh each request so tests can flip the env var.
-    // Production: NODE_ENV=production, env is set once at deploy, so this is fine.
-    const apiKey = process.env.DEEPSEEK_API_KEY;
+    const apiKey = c.env.DEEPSEEK_API_KEY;
 
     // 1) 没配 API key,直接走模板
     if (!apiKey) {
@@ -158,7 +156,7 @@ export function buildCustomerRouter(db: DB) {
     }
   });
 
-  app.get('/photos/recommend', (c) => {
+  app.get('/photos/recommend', async (c) => {
     const parsed = recommendSchema.safeParse({
       sessionId: c.req.query('sessionId'),
       platform: c.req.query('platform'),
@@ -166,21 +164,21 @@ export function buildCustomerRouter(db: DB) {
     });
     if (!parsed.success) return c.json({ error: 'bad_request' }, 400);
 
-    const session = db.prepare('SELECT store_id, rating FROM sessions WHERE id=?')
-      .get(parsed.data.sessionId) as any;
+    const session = await c.env.DB.prepare('SELECT store_id, rating FROM sessions WHERE id=?')
+      .bind(parsed.data.sessionId).first<any>();
     if (!session) return c.json({ error: 'session_not_found' }, 404);
 
-    const allPhotos = db.prepare(
+    const allPhotos = (await c.env.DB.prepare(
       'SELECT id, url, type, platforms, rating_match FROM photos WHERE store_id=?',
-    ).all(session.store_id) as any[];
+    ).bind(session.store_id).all<any>()).results;
 
     const filtered = allPhotos
-      .map((p) => ({
+      .map((p: any) => ({
         ...p,
         platforms: JSON.parse(p.platforms) as string[],
         rating_match: JSON.parse(p.rating_match) as number[],
       }))
-      .filter((p) =>
+      .filter((p: any) =>
         p.platforms.includes(parsed.data.platform) &&
         (session.rating == null || p.rating_match.includes(session.rating))
       );
@@ -199,15 +197,15 @@ export function buildCustomerRouter(db: DB) {
     const parsed = logJumpSchema.safeParse(body);
     if (!parsed.success) return c.json({ error: 'bad_request' }, 400);
 
-    const session = db.prepare('SELECT store_id, rating FROM sessions WHERE id=?')
-      .get(parsed.data.sessionId) as any;
+    const session = await c.env.DB.prepare('SELECT store_id, rating FROM sessions WHERE id=?')
+      .bind(parsed.data.sessionId).first<any>();
     if (!session) return c.json({ error: 'session_not_found' }, 404);
 
-    const id = randomUUID();
-    db.prepare(`INSERT INTO reviews
+    const id = crypto.randomUUID();
+    await c.env.DB.prepare(`INSERT INTO reviews
       (id, session_id, store_id, rating, platform, project_tags, technician_id, edited_text, photo_ids, copied_at, jumped_to_app, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
-    ).run(
+    ).bind(
       id,
       parsed.data.sessionId,
       session.store_id,
@@ -219,21 +217,21 @@ export function buildCustomerRouter(db: DB) {
       JSON.stringify(parsed.data.photoIds),
       Date.now(),
       Date.now(),
-    );
+    ).run();
 
     // 累加照片 use_count
     if (parsed.data.photoIds.length) {
-      const stmt = db.prepare('UPDATE photos SET use_count=use_count+1 WHERE id=?');
-      parsed.data.photoIds.forEach((pid) => stmt.run(pid));
+      const stmt = c.env.DB.prepare('UPDATE photos SET use_count=use_count+1 WHERE id=?');
+      await c.env.DB.batch(parsed.data.photoIds.map((pid) => stmt.bind(pid)));
     }
 
     return c.json({ ok: true });
   });
 
-  app.get('/config/:storeId', (c) => {
+  app.get('/config/:storeId', async (c) => {
     const storeId = c.req.param('storeId');
-    const row = db.prepare('SELECT name, platform_urls FROM store_config WHERE store_id=?')
-      .get(storeId) as any;
+    const row = await c.env.DB.prepare('SELECT name, platform_urls FROM store_config WHERE store_id=?')
+      .bind(storeId).first<any>();
     if (!row) return c.json({ name: '', platformUrls: {} });
     return c.json({
       name: row.name ?? '',

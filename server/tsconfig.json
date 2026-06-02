@@ -6,13 +6,10 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "dist",
-    "rootDir": "src",
     "resolveJsonModule": true,
-    "declaration": false,
-    "sourceMap": true
+    "types": ["@cloudflare/workers-types"],
+    "lib": ["ES2022"],
+    "noEmit": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["src/**/*"]
 }

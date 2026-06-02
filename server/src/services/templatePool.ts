@@ -1,10 +1,8 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import dianping from '../../../seed-data/templates/dianping.json' with { type: 'json' };
+import meituan from '../../../seed-data/templates/meituan.json' with { type: 'json' };
+import douyin from '../../../seed-data/templates/douyin.json' with { type: 'json' };
+import xiaohongshu from '../../../seed-data/templates/xiaohongshu.json' with { type: 'json' };
 import type { GenerateInput } from './llm.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..', '..', '..', 'seed-data', 'templates');
 
 interface Pool {
   openings: string[];
@@ -15,24 +13,19 @@ interface Pool {
   endings: string[];
 }
 
-const cache = new Map<string, Pool>();
-
-function loadPool(platform: string): Pool {
-  let pool = cache.get(platform);
-  if (!pool) {
-    const raw = readFileSync(join(ROOT, `${platform}.json`), 'utf-8');
-    pool = JSON.parse(raw) as Pool;
-    cache.set(platform, pool);
-  }
-  return pool;
-}
+const POOLS: Record<string, Pool> = {
+  dianping: dianping as Pool,
+  meituan: meituan as Pool,
+  douyin: douyin as Pool,
+  xiaohongshu: xiaohongshu as Pool,
+};
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 export function composeFromPool(input: GenerateInput): string {
-  const pool = loadPool(input.platform);
+  const pool = POOLS[input.platform];
   const technician = input.technician || '店里的技师';
   const tagSentence = input.tags.length
     ? `这次主要做的是${input.tags.join('和')}`

@@ -1,3 +1,4 @@
+export const SCHEMA = `
 -- 会话:一次扫码到完成的链路
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,
@@ -99,6 +100,14 @@ CREATE TABLE IF NOT EXISTS store_config (
   updated_at INTEGER
 );
 
+-- 照片二进制(D1 BLOB 存储)
+CREATE TABLE IF NOT EXISTS photo_data (
+  photo_id TEXT PRIMARY KEY,
+  mime TEXT NOT NULL,
+  data BLOB NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_reviews_store_created ON reviews(store_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_complaints_store_status ON complaints(store_id, status);
 CREATE INDEX IF NOT EXISTS idx_sessions_store_created ON sessions(store_id, created_at);
+`;

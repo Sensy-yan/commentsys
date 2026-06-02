@@ -4,27 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy",
+    "types": "tsc --noEmit"
   },
   "dependencies": {
-    "@hono/node-server": "^1.13.0",
-    "better-sqlite3": "^11.3.0",
-    "dotenv": "^16.4.0",
     "hono": "^4.6.0",
     "jose": "^6.2.3",
     "qrcode": "^1.5.4",
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.11",
-    "@types/node": "^22.0.0",
+    "@cloudflare/workers-types": "^4.20250115.0",
     "@types/qrcode": "^1.5.6",
-    "tsx": "^4.19.0",
     "typescript": "^5.5.0",
-    "vitest": "^2.1.0"
+    "wrangler": "^4.96.0"
   }
 }

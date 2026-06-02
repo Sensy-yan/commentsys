@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import type { DB } from '../db.js';
+import type { Env, Variables } from '../types.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { logAction } from '../services/audit.js';
 
@@ -14,13 +14,14 @@ const configSchema = z.object({
   wecom_webhook: z.string().optional(),
 });
 
-export function buildConfigRouter(db: DB, jwtSecret: string) {
-  const app = new Hono();
-  app.use('*', authMiddleware(jwtSecret));
+export function buildConfigRouter() {
+  const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+  app.use('*', authMiddleware);
 
-  app.get('/', (c) => {
-    const claims = (c.get as (k: string) => unknown)('claims') as { storeId: string };
-    const row = db.prepare('SELECT * FROM store_config WHERE store_id=?').get(claims.storeId) as any;
+  app.get('/', async (c) => {
+    const claims = c.get('claims') as { storeId: string };
+    const row = await c.env.DB.prepare('SELECT * FROM store_config WHERE store_id=?')
+      .bind(claims.storeId).first<any>();
     if (!row) return c.json({
       name: '', phone: '', address: '',
       technicians: [], projects: [],
@@ -38,12 +39,12 @@ export function buildConfigRouter(db: DB, jwtSecret: string) {
   });
 
   app.put('/', async (c) => {
-    const claims = (c.get as (k: string) => unknown)('claims') as { storeId: string; operatorId: string };
+    const claims = c.get('claims') as { storeId: string; operatorId: string };
     const body = await c.req.json().catch(() => ({}));
     const parsed = configSchema.safeParse(body);
     if (!parsed.success) return c.json({ error: 'bad_request', issues: parsed.error.issues }, 400);
 
-    db.prepare(`INSERT INTO store_config
+    await c.env.DB.prepare(`INSERT INTO store_config
       (store_id, name, address, phone, platform_urls, wecom_webhook, technicians, projects, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(store_id) DO UPDATE SET
@@ -51,7 +52,7 @@ export function buildConfigRouter(db: DB, jwtSecret: string) {
         platform_urls=excluded.platform_urls, wecom_webhook=excluded.wecom_webhook,
         technicians=excluded.technicians, projects=excluded.projects,
         updated_at=excluded.updated_at`,
-    ).run(
+    ).bind(
       claims.storeId,
       parsed.data.name ?? null,
       parsed.data.address ?? null,
@@ -61,9 +62,9 @@ export function buildConfigRouter(db: DB, jwtSecret: string) {
       JSON.stringify(parsed.data.technicians),
       JSON.stringify(parsed.data.projects),
       Date.now(),
-    );
+    ).run();
 
-    logAction(db, {
+    await logAction(c.env.DB, {
       operatorId: claims.operatorId,
       action: 'config_updated',
       targetType: 'store_config',

@@ -1,0 +1,17 @@
+name = "qsycommetsys"
+main = "server/src/worker.ts"
+compatibility_date = "2025-01-15"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "qsycommetsys"
+database_id = "9b1d26fe-8650-47fb-bbda-c984e0b5a4fb"
+
+[vars]
+NODE_ENV = "production"

@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import Login from './pages/Login.vue';
 import Dashboard from './pages/Dashboard.vue';
 import Complaints from './pages/Complaints.vue';
@@ -7,7 +7,7 @@ import Settings from './pages/Settings.vue';
 import QRCodeExport from './pages/QRCodeExport.vue';
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     { path: '/', redirect: '/login' },
     { path: '/login', component: Login },

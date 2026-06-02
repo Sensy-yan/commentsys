@@ -1,15 +1,16 @@
 import { Hono } from 'hono';
-import type { DB } from '../db.js';
+import type { Env, Variables } from '../types.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { generateQrPng } from '../services/qrcode.js';
 
-export function buildQrcodeRouter(db: DB, jwtSecret: string, customerBaseUrl: string) {
-  const app = new Hono();
-  app.use('*', authMiddleware(jwtSecret));
+export function buildQrcodeRouter() {
+  const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+  app.use('*', authMiddleware);
 
   app.get('/png', async (c) => {
-    const claims = (c.get as (k: string) => unknown)('claims') as { storeId: string };
-    const url = `${customerBaseUrl}/#/?s=${claims.storeId}`;
+    const claims = c.get('claims') as { storeId: string };
+    const baseUrl = c.env.CUSTOMER_BASE_URL ?? 'https://qsycommetsys.workers.dev';
+    const url = `${baseUrl}/#/?s=${claims.storeId}`;
     const png = await generateQrPng(url);
     return new Response(new Uint8Array(png), {
       status: 200,

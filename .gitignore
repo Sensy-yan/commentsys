@@ -1,11 +1,10 @@
 node_modules/
 dist/
+public/
 .env
 .env.local
-server/data/*.db
-server/data/*.db-journal
-server/data/*.db-shm
-server/data/*.db-wal
+.dev.vars
+.wrangler/
 *.log
 .DS_Store
 .vscode/
