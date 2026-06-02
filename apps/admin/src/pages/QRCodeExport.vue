@@ -5,9 +5,10 @@ const imgUrl = ref('');
 
 onMounted(async () => {
   const token = localStorage.getItem('token');
-  const res = await fetch('/api/admin/qrcode/png', {
+  const res = await fetch('/api/admin/qrcode/svg', {
     headers: { Authorization: `Bearer ${token}` },
   });
+  if (!res.ok) return;
   const blob = await res.blob();
   imgUrl.value = URL.createObjectURL(blob);
 });
@@ -16,7 +17,7 @@ function downloadImg() {
   if (!imgUrl.value) return;
   const a = document.createElement('a');
   a.href = imgUrl.value;
-  a.download = 'commentsys-qr.png';
+  a.download = 'qsy-qrcode.svg';
   a.click();
 }
 </script>
@@ -80,7 +81,10 @@ function downloadImg() {
       :disabled="!imgUrl"
       class="btn-primary w-full"
     >
-      下载 PNG
+      下载 SVG
     </button>
+    <p class="text-[10px] text-slate-400 text-center mt-2 tracking-wide">
+      SVG 矢量图,放多大都不糊
+    </p>
   </div>
 </template>
